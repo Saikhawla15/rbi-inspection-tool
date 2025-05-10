@@ -1,152 +1,127 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Générateur de Plan d'Inspection RBI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
-      font-family: 'Roboto', sans-serif;
+      font-family: Arial, sans-serif;
+      background-color: #ffffff;
+      color: #000000;
       margin: 0;
-      background-color: #f4f8fb;
-      color: #333;
+      padding: 0;
     }
     header {
-      background-color: #003366;
+      background-color: #c00000;
       color: white;
       padding: 20px;
       text-align: center;
     }
     .container {
-      max-width: 800px;
-      margin: auto;
-      padding: 20px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-top: 20px;
+      padding: 30px;
     }
     h2 {
-      color: #003366;
+      border-bottom: 2px solid #c00000;
+      padding-bottom: 5px;
     }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-    select, input[type="text"], input[type="date"] {
+    input, select, textarea {
       width: 100%;
-      padding: 10px;
-      margin-top: 5px;
+      padding: 8px;
+      margin: 5px 0 15px 0;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 4px;
     }
     button {
-      background-color: #006699;
+      background-color: #c00000;
       color: white;
       padding: 10px 20px;
-      margin-top: 20px;
       border: none;
-      border-radius: 5px;
+      border-radius: 4px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #004466;
+      background-color: #a00000;
     }
     .result {
       margin-top: 30px;
-      background-color: #e6f0f7;
       padding: 20px;
-      border-left: 5px solid #006699;
-      border-radius: 5px;
+      background-color: #f8f8f8;
+      border-left: 5px solid #c00000;
+    }
+    .logo {
+      width: 100px;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1><i class="fas fa-tools"></i> Générateur de Plan d'Inspection RBI</h1>
-    <p>Prototype simplifié basé sur API 580 / 581</p>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Logo_API.svg/1280px-Logo_API.svg.png" alt="Logo" class="logo">
+    <h1>Générateur RBI – Plan d'Inspection API 580/581</h1>
   </header>
 
   <div class="container">
-    <h2>Données d'entrée</h2>
-    <label for="equipement">Type d'équipement</label>
-    <select id="equipement">
-      <option>Slug Catcher</option>
-      <option>Pressure Vessel</option>
-      <option>Heat Exchanger</option>
+    <h2>1. Informations sur l'Équipement</h2>
+    <input type="text" id="equipement" placeholder="Tag équipement">
+    <input type="text" id="localisation" placeholder="Localisation dans l'installation">
+    <select id="type">
+      <option value="Recipent">Récipient</option>
+      <option value="Echangeur">Échangeur</option>
+      <option value="Cuve">Cuve</option>
     </select>
 
-    <label for="cof">COF (Consequence of Failure)</label>
-    <select id="cof">
-      <option value="1">1 - Faible</option>
-      <option value="2">2 - Moyenne</option>
-      <option value="3">3 - Élevée</option>
-      <option value="4">4 - Critique</option>
-    </select>
-
-    <label for="pof">POF (Probability of Failure)</label>
+    <h2>2. Analyse RBI</h2>
     <select id="pof">
-      <option value="1">1 - Très improbable</option>
-      <option value="2">2 - Faible</option>
-      <option value="3">3 - Moyenne</option>
-      <option value="4">4 - Probable</option>
-      <option value="5">5 - Très probable</option>
+      <option value="Bas">PoF : Bas</option>
+      <option value="Moyen">PoF : Moyen</option>
+      <option value="Élevé">PoF : Élevé</option>
     </select>
+    <select id="cof">
+      <option value="Bas">CoF : Bas</option>
+      <option value="Moyen">CoF : Moyen</option>
+      <option value="Élevé">CoF : Élevé</option>
+    </select>
+    <textarea id="degradation" placeholder="Facteurs de dégradation (ex: CUI, corrosion externe)"></textarea>
 
-    <label for="corrosion">Type(s) de corrosion</label>
-    <input type="text" id="corrosion" placeholder="ex: corrosion interne, fissuration H2S...">
+    <button onclick="genererPlan()">Générer le Plan d'Inspection</button>
 
-    <label for="date">Dernière inspection</label>
-    <input type="date" id="date">
-
-    <button onclick="genererPlan()">Générer le plan d'inspection</button>
-
-    <div id="resultat" class="result" style="display: none;"></div>
+    <div class="result" id="plan"></div>
   </div>
 
   <script>
     function genererPlan() {
-      const equipement = document.getElementById('equipement').value;
-      const cof = parseInt(document.getElementById('cof').value);
-      const pof = parseInt(document.getElementById('pof').value);
-      const corrosion = document.getElementById('corrosion').value;
-      const date = document.getElementById('date').value;
+      const eq = document.getElementById('equipement').value;
+      const loc = document.getElementById('localisation').value;
+      const type = document.getElementById('type').value;
+      const pof = document.getElementById('pof').value;
+      const cof = document.getElementById('cof').value;
+      const deg = document.getElementById('degradation').value;
 
-      let criticite = cof * pof;
-      let niveau = '';
-      let frequence = '';
-      let techniques = '';
+      const risque = (pof === "Élevé" || cof === "Élevé") ? "Élevé" : (pof === "Moyen" || cof === "Moyen") ? "Moyen" : "Bas";
 
-      if (criticite <= 4) {
-        niveau = 'Faible';
-        frequence = 'Tous les 5 ans';
-        techniques = 'VT (Visuel), UT (ultrasons simplifié)';
-      } else if (criticite <= 9) {
-        niveau = 'Modérée';
-        frequence = 'Tous les 3 ans';
-        techniques = 'VT, UT, PT (ressuage si fissuration possible)';
-      } else {
-        niveau = 'Élevée';
-        frequence = 'Tous les 1-2 ans';
-        techniques = 'UT, RT (radiographie si soudure), TOFD ou AUT si disponible';
-      }
-
-      const message = `
-        <h3>Plan d'inspection généré</h3>
-        <p><strong>Équipement :</strong> ${equipement}</p>
-        <p><strong>Niveau de criticité :</strong> ${niveau} (COF x POF = ${criticite})</p>
-        <p><strong>Fréquence recommandée :</strong> ${frequence}</p>
-        <p><strong>Techniques conseillées :</strong> ${techniques}</p>
-        <p><strong>Types de corrosion :</strong> ${corrosion || 'Non spécifié'}</p>
-        <p><strong>Dernière inspection :</strong> ${date || 'Non renseignée'}</p>
+      const html = `
+        <h3>Plan d’inspection – ${eq}</h3>
+        <p><strong>Localisation :</strong> ${loc}</p>
+        <p><strong>Type :</strong> ${type}</p>
+        <p><strong>PoF :</strong> ${pof} – <strong>CoF :</strong> ${cof} – <strong>Niveau de risque :</strong> ${risque}</p>
+        <p><strong>Dégradations principales :</strong> ${deg}</p>
+        <h4>Stratégie d’inspection recommandée :</h4>
+        <ul>
+          <li><strong>Méthodes :</strong> UTG, PT, VT selon accessibilité</li>
+          <li><strong>Zones critiques :</strong> soudures, points à forte vitesse ou accumulation</li>
+          <li><strong>Fréquences :</strong>
+            <ul>
+              <li>Inspection visuelle externe : 1 fois/an</li>
+              <li>Inspection interne complète : 5–10 ans</li>
+              <li>UTG : tous les 2–3 ans sur zones critiques</li>
+            </ul>
+          </li>
+        </ul>
+        <h4>Synthèse :</h4>
+        <p>Mise en œuvre des inspections recommandées et réévaluation RBI dans 3 à 5 ans selon l’état.</p>
       `;
 
-      const div = document.getElementById('resultat');
-      div.innerHTML = message;
-      div.style.display = 'block';
+      document.getElementById('plan').innerHTML = html;
     }
   </script>
 </body>
