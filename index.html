@@ -2,121 +2,151 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Générateur de Plan d'Inspection RBI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f5f5f5;
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      background-color: #f4f8fb;
+      color: #333;
     }
-    h1 {
-      color: #2c3e50;
+    header {
+      background-color: #003366;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    h2 {
+      color: #003366;
     }
     label {
       display: block;
-      margin: 10px 0 5px;
+      margin-top: 15px;
+      font-weight: bold;
     }
     select, input[type="text"], input[type="date"] {
       width: 100%;
-      padding: 8px;
-      margin-bottom: 15px;
+      padding: 10px;
+      margin-top: 5px;
       border: 1px solid #ccc;
       border-radius: 5px;
     }
     button {
-      padding: 10px 20px;
-      background-color: #3498db;
+      background-color: #006699;
       color: white;
+      padding: 10px 20px;
+      margin-top: 20px;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #2980b9;
+      background-color: #004466;
     }
-    .resultat {
-      background-color: #ecf0f1;
-      padding: 15px;
-      margin-top: 20px;
-      border-radius: 8px;
+    .result {
+      margin-top: 30px;
+      background-color: #e6f0f7;
+      padding: 20px;
+      border-left: 5px solid #006699;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
-  <h1>Générateur de Plan d'Inspection RBI</h1>
-  <form id="rbiForm">
-    <label for="equipement">Type d'équipement :</label>
+  <header>
+    <h1><i class="fas fa-tools"></i> Générateur de Plan d'Inspection RBI</h1>
+    <p>Prototype simplifié basé sur API 580 / 581</p>
+  </header>
+
+  <div class="container">
+    <h2>Données d'entrée</h2>
+    <label for="equipement">Type d'équipement</label>
     <select id="equipement">
       <option>Slug Catcher</option>
-      <option>Réservoir</option>
-      <option>Échangeur</option>
+      <option>Pressure Vessel</option>
+      <option>Heat Exchanger</option>
     </select>
 
-    <label for="cof">Niveau de COF :</label>
+    <label for="cof">COF (Consequence of Failure)</label>
     <select id="cof">
-      <option>Faible</option>
-      <option>Moyen</option>
-      <option>Élevé</option>
+      <option value="1">1 - Faible</option>
+      <option value="2">2 - Moyenne</option>
+      <option value="3">3 - Élevée</option>
+      <option value="4">4 - Critique</option>
     </select>
 
-    <label for="pof">Niveau de POF :</label>
+    <label for="pof">POF (Probability of Failure)</label>
     <select id="pof">
-      <option>Faible</option>
-      <option>Moyen</option>
-      <option>Élevé</option>
+      <option value="1">1 - Très improbable</option>
+      <option value="2">2 - Faible</option>
+      <option value="3">3 - Moyenne</option>
+      <option value="4">4 - Probable</option>
+      <option value="5">5 - Très probable</option>
     </select>
 
-    <label for="corrosion">Mécanismes de corrosion :</label>
-    <input type="text" id="corrosion" placeholder="Ex : Thinning, HIC, SCC">
+    <label for="corrosion">Type(s) de corrosion</label>
+    <input type="text" id="corrosion" placeholder="ex: corrosion interne, fissuration H2S...">
 
-    <label for="site">Localisation :</label>
-    <input type="text" id="site" placeholder="Ex : MERK, Bloc 208">
+    <label for="date">Dernière inspection</label>
+    <input type="date" id="date">
 
-    <label for="dateInspection">Dernière inspection :</label>
-    <input type="date" id="dateInspection">
+    <button onclick="genererPlan()">Générer le plan d'inspection</button>
 
-    <button type="button" onclick="genererPlan()">Générer le plan</button>
-  </form>
-
-  <div id="resultat" class="resultat" style="display: none;"></div>
+    <div id="resultat" class="result" style="display: none;"></div>
+  </div>
 
   <script>
     function genererPlan() {
-      const cof = document.getElementById('cof').value;
-      const pof = document.getElementById('pof').value;
       const equipement = document.getElementById('equipement').value;
+      const cof = parseInt(document.getElementById('cof').value);
+      const pof = parseInt(document.getElementById('pof').value);
       const corrosion = document.getElementById('corrosion').value;
-      const site = document.getElementById('site').value;
-      const dateInspection = document.getElementById('dateInspection').value;
+      const date = document.getElementById('date').value;
 
-      let categorie = "Faible";
-      let plan = "Inspection tous les 5 ans : VT seulement";
+      let criticite = cof * pof;
+      let niveau = '';
+      let frequence = '';
+      let techniques = '';
 
-      if (cof === "Élevé" && pof === "Élevé") {
-        categorie = "Très élevé";
-        plan = "Inspection annuelle : UT + VT + TOFD";
-      } else if (cof === "Élevé" || pof === "Élevé") {
-        categorie = "Élevé";
-        plan = "Inspection tous les 2 ans : UT + VT";
-      } else if (cof === "Moyen" && pof === "Moyen") {
-        categorie = "Moyen";
-        plan = "Inspection tous les 3 ans : VT + UT échantillonné";
+      if (criticite <= 4) {
+        niveau = 'Faible';
+        frequence = 'Tous les 5 ans';
+        techniques = 'VT (Visuel), UT (ultrasons simplifié)';
+      } else if (criticite <= 9) {
+        niveau = 'Modérée';
+        frequence = 'Tous les 3 ans';
+        techniques = 'VT, UT, PT (ressuage si fissuration possible)';
+      } else {
+        niveau = 'Élevée';
+        frequence = 'Tous les 1-2 ans';
+        techniques = 'UT, RT (radiographie si soudure), TOFD ou AUT si disponible';
       }
 
-      const resultDiv = document.getElementById('resultat');
-      resultDiv.style.display = 'block';
-      resultDiv.innerHTML = `
-        <h2>Plan d'inspection généré :</h2>
+      const message = `
+        <h3>Plan d'inspection généré</h3>
         <p><strong>Équipement :</strong> ${equipement}</p>
-        <p><strong>COF :</strong> ${cof}</p>
-        <p><strong>POF :</strong> ${pof}</p>
-        <p><strong>Catégorie de risque :</strong> ${categorie}</p>
-        <p><strong>Mécanismes de corrosion :</strong> ${corrosion}</p>
-        <p><strong>Localisation :</strong> ${site}</p>
-        <p><strong>Dernière inspection :</strong> ${dateInspection}</p>
-        <p><strong>Recommandation :</strong> ${plan}</p>
+        <p><strong>Niveau de criticité :</strong> ${niveau} (COF x POF = ${criticite})</p>
+        <p><strong>Fréquence recommandée :</strong> ${frequence}</p>
+        <p><strong>Techniques conseillées :</strong> ${techniques}</p>
+        <p><strong>Types de corrosion :</strong> ${corrosion || 'Non spécifié'}</p>
+        <p><strong>Dernière inspection :</strong> ${date || 'Non renseignée'}</p>
       `;
+
+      const div = document.getElementById('resultat');
+      div.innerHTML = message;
+      div.style.display = 'block';
     }
   </script>
 </body>
