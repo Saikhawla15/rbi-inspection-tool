@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Générateur de Plan d'Inspection RBI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    select, input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .resultat {
+      background-color: #ecf0f1;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Générateur de Plan d'Inspection RBI</h1>
+  <form id="rbiForm">
+    <label for="equipement">Type d'équipement :</label>
+    <select id="equipement">
+      <option>Slug Catcher</option>
+      <option>Réservoir</option>
+      <option>Échangeur</option>
+    </select>
+
+    <label for="cof">Niveau de COF :</label>
+    <select id="cof">
+      <option>Faible</option>
+      <option>Moyen</option>
+      <option>Élevé</option>
+    </select>
+
+    <label for="pof">Niveau de POF :</label>
+    <select id="pof">
+      <option>Faible</option>
+      <option>Moyen</option>
+      <option>Élevé</option>
+    </select>
+
+    <label for="corrosion">Mécanismes de corrosion :</label>
+    <input type="text" id="corrosion" placeholder="Ex : Thinning, HIC, SCC">
+
+    <label for="site">Localisation :</label>
+    <input type="text" id="site" placeholder="Ex : MERK, Bloc 208">
+
+    <label for="dateInspection">Dernière inspection :</label>
+    <input type="date" id="dateInspection">
+
+    <button type="button" onclick="genererPlan()">Générer le plan</button>
+  </form>
+
+  <div id="resultat" class="resultat" style="display: none;"></div>
+
+  <script>
+    function genererPlan() {
+      const cof = document.getElementById('cof').value;
+      const pof = document.getElementById('pof').value;
+      const equipement = document.getElementById('equipement').value;
+      const corrosion = document.getElementById('corrosion').value;
+      const site = document.getElementById('site').value;
+      const dateInspection = document.getElementById('dateInspection').value;
+
+      let categorie = "Faible";
+      let plan = "Inspection tous les 5 ans : VT seulement";
+
+      if (cof === "Élevé" && pof === "Élevé") {
+        categorie = "Très élevé";
+        plan = "Inspection annuelle : UT + VT + TOFD";
+      } else if (cof === "Élevé" || pof === "Élevé") {
+        categorie = "Élevé";
+        plan = "Inspection tous les 2 ans : UT + VT";
+      } else if (cof === "Moyen" && pof === "Moyen") {
+        categorie = "Moyen";
+        plan = "Inspection tous les 3 ans : VT + UT échantillonné";
+      }
+
+      const resultDiv = document.getElementById('resultat');
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = `
+        <h2>Plan d'inspection généré :</h2>
+        <p><strong>Équipement :</strong> ${equipement}</p>
+        <p><strong>COF :</strong> ${cof}</p>
+        <p><strong>POF :</strong> ${pof}</p>
+        <p><strong>Catégorie de risque :</strong> ${categorie}</p>
+        <p><strong>Mécanismes de corrosion :</strong> ${corrosion}</p>
+        <p><strong>Localisation :</strong> ${site}</p>
+        <p><strong>Dernière inspection :</strong> ${dateInspection}</p>
+        <p><strong>Recommandation :</strong> ${plan}</p>
+      `;
+    }
+  </script>
+</body>
+</html>
